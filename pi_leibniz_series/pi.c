@@ -6,6 +6,7 @@
 
 #define ITERATIONS 1e09
 #define MAX_THREADS 16
+#define REPETITIONS 4
 
 int n_threads = 1;
 double results[MAX_THREADS];
@@ -70,17 +71,30 @@ struct result sequential() {
 }
 
 int main() {
-    FILE *out_file = fopen("results.csv", "w");
-    if (out_file == NULL) {
+    FILE *seq_file = fopen("results_seq.csv", "w");
+    if (seq_file == NULL) {
         exit(1);
     }
-    fprintf(out_file, "%s", "n_threads;r_time;pi\n");
-    int options[] = {1, 2, 4, 8, 16};
-    for (int i = 0; i < 5; i++) {
-        n_threads = options[i];
-        struct result r = parallel();
-        fprintf(out_file, "%d;%ld,%06ld;%2.12f\n", n_threads, r.tv_sec, r.tv_usec, r.pi);
+    fprintf(seq_file, "%s", "r_time;pi\n");
+    for (int it = 0; it < REPETITIONS; it++) {
+        struct result r = sequential();
+        fprintf(seq_file, "%ld,%06ld;%2.12f\n", r.tv_sec, r.tv_usec, r.pi);
     }
-    fclose(out_file);
+    for (int it = 0; it < REPETITIONS; it++) {
+        char *filename = (char*) malloc(13 * sizeof(char));
+        sprintf(filename, "results%d.csv", it);
+        FILE *out_file = fopen(filename, "w");
+        if (out_file == NULL) {
+            exit(1);
+        }
+        fprintf(out_file, "%s", "n_threads;r_time;pi\n");
+        int options[] = {1, 2, 4, 8, 16};
+        for (int i = 0; i < 5; i++) {
+            n_threads = options[i];
+            struct result r = parallel();
+            fprintf(out_file, "%d;%ld,%06ld;%2.12f\n", n_threads, r.tv_sec, r.tv_usec, r.pi);
+        }
+        fclose(out_file);
+    }
     return 0;
 }
