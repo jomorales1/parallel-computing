@@ -18,6 +18,8 @@ int calculate_pi(double *pi_total, int id) {
     start = (ITERATIONS / omp_get_num_threads()) * id;
     end = (ITERATIONS / omp_get_num_threads()) * (id + 1);
     for (int n = start; n < end; n += 2) {
+        // pi_total[id] = pi_total[id] + (double) (4.0 / (2 * n + 1));
+        // pi_total[id] = pi_total[id] - (double) (4.0 / (2 * (n + 1) + 1));
         *(pi_total + id) = *(pi_total + id) + (double) (4.0 / (2 * n + 1));
         *(pi_total + id) = *(pi_total + id) - (double) (4.0 / (2 * (n + 1) + 1));
     }
@@ -25,7 +27,7 @@ int calculate_pi(double *pi_total, int id) {
 }
 
 struct result parallel(int n_threads) {
-    double pi[n_threads];
+    double* pi = (double *) malloc(n_threads * sizeof(double));
     struct timeval t_before, t_after, t_result;
     gettimeofday(&t_before, NULL);
     #pragma omp parallel num_threads(n_threads)
@@ -33,14 +35,13 @@ struct result parallel(int n_threads) {
         int id = omp_get_thread_num();
         calculate_pi(pi, id);
     }
-    double res = 0.0;
-    for (int i = 0; i < n_threads; i++) {
-        res += pi[i];
+    for (int i = 1; i < n_threads; i++) {
+        pi[0] += pi[i];
     }
     gettimeofday(&t_after, NULL);
     timersub(&t_after, &t_before, &t_result);
     struct result r;
-    r.pi = res;
+    r.pi = pi[0];
     r.tv_sec = (long int) t_result.tv_sec;
     r.tv_usec = (long int) t_result.tv_usec;
     return r;
