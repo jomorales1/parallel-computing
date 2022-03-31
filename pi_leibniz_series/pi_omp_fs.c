@@ -4,7 +4,7 @@
 #include <sys/time.h>
 #include "omp.h"
 
-#define ITERATIONS 2e09
+#define ITERATIONS 1e09
 #define REPETITIONS 4
 
 struct result {
@@ -14,14 +14,14 @@ struct result {
 };
 
 int calculate_pi(double *pi_total, int id) {
-    int start, end;
+    long start, end;
     start = (ITERATIONS / omp_get_num_threads()) * id;
     end = (ITERATIONS / omp_get_num_threads()) * (id + 1);
-    for (int n = start; n < end; n += 2) {
+    for (long n = start; n < end; n += 2) {
         // pi_total[id] = pi_total[id] + (double) (4.0 / (2 * n + 1));
         // pi_total[id] = pi_total[id] - (double) (4.0 / (2 * (n + 1) + 1));
-        *(pi_total + id) = *(pi_total + id) + (double) (4.0 / (2 * n + 1));
-        *(pi_total + id) = *(pi_total + id) - (double) (4.0 / (2 * (n + 1) + 1));
+        *(pi_total + id) = *(pi_total + id) + (double) (4.0 / ((long int) (2 * n + 1)));
+        *(pi_total + id) = *(pi_total + id) - (double) (4.0 / ((long int) (2 * (n + 1) + 1)));
     }
     return 0;
 }
@@ -33,6 +33,7 @@ struct result parallel(int n_threads) {
     #pragma omp parallel num_threads(n_threads)
     {
         int id = omp_get_thread_num();
+        pi[id] = 0;
         calculate_pi(pi, id);
     }
     for (int i = 1; i < n_threads; i++) {
